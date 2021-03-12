@@ -11,6 +11,8 @@ Run the file, sorry - it doesn't save your username and password but it does sav
 
 As you can see from the demo below it currently allows typing in a year number; there is currently functionality for back to 2018 and forwards into 2021 (yes, it works with live showings). I'm working on proper F1TV Archive Support.
 
+## Warning
+This has pretty much no error checking, it will just crash if there's a problem
 
 ### Demo using an additional stream from Austria 2020
 
