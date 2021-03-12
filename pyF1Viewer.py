@@ -163,10 +163,70 @@ class F1TVApp:
                     "emfAttributes"
                 ]["MeetingKey"]
             )
+    
+    def archive_year(self, pageId):
+        url = f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/2"
+        archive_year_data = requests.get(url).json()
+        #Build menu for year's different categories
+        counter = 1
+        for container in archive_year_data['resultObj']['containers']:
+            if len(container['retrieveItems']['resultObj']) > 0:
+                print(f"{counter}. {container['metadata']['label']}")
+            counter += 1
+        #Take input and decrement by 1 to get the right one.
+        user_input = int(input("Choice> "))-1
+
+        #Build menu of selection's content
+        counter = 1
+        for container in archive_year_data['resultObj']['containers'][user_input]['retrieveItems']['resultObj']['containers']:
+            print(f"{counter}. {container['id']} - {container['metadata']['title']}")
+            counter += 1
+        #Take input and decrement by 1 to get the right one.
+        previous_user_input = user_input
+        user_input = int(input("Choice> "))-1
+        contentId = archive_year_data['resultObj']['containers'][previous_user_input]['retrieveItems']['resultObj']['containers'][user_input]['id']
+        self.check_additional_streams(contentId)
+
+    def archive_year_block(self, collectionId):
+        url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/2"
+        archive_years = requests.get(url).json()
+        #Build menu for archive block's years
+        counter = 1
+        for year in archive_years['resultObj']['containers']:
+            try:
+                print(f"{counter}. {year['metadata']['season']}")
+            except:
+                print(f"{counter}. {year['metadata']['title']}")
+            counter += 1
+        #Take input and decrement by 1 to get the right one.
+        user_input = int(input("Choice> "))-1
+        try:
+            pageId = archive_years['resultObj']['containers'][user_input]['actions'][0]['uri'].split("ALL/PAGE/")[1].split("/")[0]
+            self.archive_year(pageId)
+        except:
+            #If we've hit this it's probably just directly a link to a season review
+            self.check_additional_streams(archive_years['resultObj']['containers'][user_input]['id'])
+
+
+
+    def archive(self):
+        archive_data = requests.get(f"{self.f1tvapi}ALL/PAGE/493/F1_TV_Pro_Monthly/14").json()
+
+        #Print out all archive blocks and give users a choice
+        counter = 1
+        for container in archive_data['resultObj']['containers']:
+            if container['metadata']['label'] != None and len(container['retrieveItems']['resultObj']) > 0:
+                print(f"{counter}. {container['metadata']['label']}")
+            counter += 1
+        #Take input and decrement by 1 to get the right one.
+        user_input = int(input("Choice> "))-1
+        collectionId = archive_data['resultObj']['containers'][user_input]['retrieveItems']['uriOriginal'].split("/TRAY/EXTCOLLECTION/")[1]
+        self.archive_year_block(collectionId)
 
     def mainpage(self):
         print("1. Login")
         print("2. Year Choice")
+        print("3. Archive")
         user_input = int(input("Choice> "))
         if user_input == 1:
             self.get_api_key()
@@ -174,6 +234,8 @@ class F1TVApp:
         elif user_input == 2:
             user_input = int(input("Year Choice> "))
             self.year_content(user_input)
+        elif user_input == 3:
+            self.archive()
 
 
 f1tvapp = F1TVApp()
