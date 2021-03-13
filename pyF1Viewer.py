@@ -112,7 +112,6 @@ class F1TVApp:
     def check_additional_streams(self, content_id):
         """Method to check if contendId has additional streams (IE: Onboards, PLC, Data)"""
         url = f"{self.f1tvapi}ALL/CONTENT/VIDEO/{content_id}/F1_TV_Pro_Monthly/{self.f1tvapi_group_id}"
-        print(url)
         content_data = requests.get(url).json()
 
         if (
