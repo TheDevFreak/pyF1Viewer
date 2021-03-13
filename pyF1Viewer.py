@@ -164,6 +164,7 @@ class F1TVApp:
                 ]["MeetingKey"]
             )
     
+    #Archive Related Methods
     def archive_year(self, pageId):
         url = f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/2"
         archive_year_data = requests.get(url).json()
@@ -187,16 +188,23 @@ class F1TVApp:
         contentId = archive_year_data['resultObj']['containers'][previous_user_input]['retrieveItems']['resultObj']['containers'][user_input]['id']
         self.check_additional_streams(contentId)
 
-    def archive_year_block(self, collectionId):
-        url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/2"
-        archive_years = requests.get(url).json()
+    def archive_year_block(self, collectionId, type="EXTCOLLECTION"):
+        if type != "EXTCOLLECTION":
+            url = f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/14"
+            archive_years = requests.get(url, params=collectionId).json()
+        else:
+            url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/2"
+            archive_years = requests.get(url).json()
         #Build menu for archive block's years
         counter = 1
         for year in archive_years['resultObj']['containers']:
-            try:
-                print(f"{counter}. {year['metadata']['season']}")
-            except:
+            if type == "SEARCH":
                 print(f"{counter}. {year['metadata']['title']}")
+            else:
+                try:
+                    print(f"{counter}. {year['metadata']['season']}")
+                except:
+                    print(f"{counter}. {year['metadata']['title']}")
             counter += 1
         #Take input and decrement by 1 to get the right one.
         user_input = int(input("Choice> "))-1
@@ -206,7 +214,6 @@ class F1TVApp:
         except:
             #If we've hit this it's probably just directly a link to a season review
             self.check_additional_streams(archive_years['resultObj']['containers'][user_input]['id'])
-
 
 
     def archive(self):
@@ -222,11 +229,48 @@ class F1TVApp:
         user_input = int(input("Choice> "))-1
         collectionId = archive_data['resultObj']['containers'][user_input]['retrieveItems']['uriOriginal'].split("/TRAY/EXTCOLLECTION/")[1]
         self.archive_year_block(collectionId)
+    
+    #"Shows" Related Functions
+
+    def shows(self):
+        shows_data = requests.get(f"{self.f1tvapi}ALL/PAGE/410/F1_TV_Pro_Monthly/14").json()
+
+        #Print out all archive blocks and give users a choice
+        counter = 1
+        for container in shows_data['resultObj']['containers']:
+            if container['metadata']['label'] != None and len(container['retrieveItems']['resultObj']) > 0:
+                print(f"{counter}. {container['metadata']['label']}")
+            else:
+                #Combine the names of all shows under this unnamed block
+                combined = ""
+                try:
+                    for item in container['retrieveItems']['resultObj']['containers']:
+                        combined += item['metadata']['title']+", "
+                    combined = combined[:-2]
+                except:
+                    combined = "None"
+                print(f"{counter}. {combined}")
+            counter += 1
+        #Take input and decrement by 1 to get the right one.
+        user_input = int(input("Choice> "))-1
+        try:
+            collectionId = shows_data['resultObj']['containers'][user_input]['retrieveItems']['uriOriginal'].split("/TRAY/EXTCOLLECTION/")[1]
+            self.archive_year_block(collectionId)
+        except:
+            #Since that didn't work we need to handle this differently
+            #Use archive_year_block with some hackers
+            params = {}
+            #Generate params from uriOriginal
+            original_params = shows_data['resultObj']['containers'][user_input]['retrieveItems']['uriOriginal'].split("?")[1].split("&")
+            for original_param in original_params:
+                params[original_param.split("=")[0]] = original_param.split("=")[1]
+            self.archive_year_block(params, "SEARCH")
 
     def mainpage(self):
         print("1. Login")
         print("2. Year Choice")
         print("3. Archive")
+        print("4. Shows")
         user_input = int(input("Choice> "))
         if user_input == 1:
             self.get_api_key()
@@ -236,6 +280,8 @@ class F1TVApp:
             self.year_content(user_input)
         elif user_input == 3:
             self.archive()
+        elif user_input == 4:
+            self.shows()
 
 
 f1tvapp = F1TVApp()
