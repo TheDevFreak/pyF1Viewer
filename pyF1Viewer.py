@@ -1,9 +1,14 @@
-import requests, json, re, os.path, time
 from subprocess import call
+import json
+import re
+import os.path
+import time
+import requests
 
 
 class F1TVApp:
     def __init__(self):
+        """Initialising F1TVApp"""
         self.f1api = "https://api.formula1.com/v2/"
         self.f1tvapi = "https://f1tv.formula1.com/2.0/R/ENG/BIG_SCREEN_HLS/"
         self.apiKey = None
@@ -13,12 +18,14 @@ class F1TVApp:
             self.mainpage()
 
     def get_api_key(self):
+        """Obtain F1 account api api key"""
         # Download script from f1tv site
         r = requests.get("https://account.formula1.com/scripts/main.min.js")
         # Use regex to extract apikey
         self.apiKey = re.findall('apikey: *"(.*?)"', r.text)[0]
 
     def login(self, username, password):
+        """Logs into F1TV, stores logins for 23hours to reduce auth calls"""
         login_headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "User-Agent": "RaceControl",
@@ -72,6 +79,7 @@ class F1TVApp:
                 json.dump(file_data, f)
 
     def play_content(self, contentId, channelId=None):
+        """With a given contentId and optional channelId, play that by printing the url and launching mpv"""
         url = "https://f1tv.formula1.com/1.0/R/ENG/BIG_SCREEN_HLS/ALL/CONTENT/PLAY"
         params = {"contentId": contentId}
         if channelId:
@@ -84,7 +92,7 @@ class F1TVApp:
             call(f"mpv \"{r.json()['resultObj']['url']}\"")
 
     def check_additional_streams(self, contentId):
-        # Method to check if contendId has additional streams (IE: Onboards, PLC, Data)
+        """Method to check if contendId has additional streams (IE: Onboards, PLC, Data)"""
         url = f"{self.f1tvapi}ALL/CONTENT/VIDEO/{contentId}/F1_TV_Pro_Monthly/14"
         content_data = requests.get(url).json()
 
@@ -128,6 +136,7 @@ class F1TVApp:
             self.play_content(contentId)
 
     def meeting_content(self, meetingid):
+        """Get contents of a meeting (contents=session meeting=event)"""
         meeting_data = requests.get(
             f"{self.f1tvapi}ALL/PAGE/SANDWICH/F1_TV_Pro_Monthly/14?meetingId={meetingid}&title=weekend-sessions"
         )
@@ -145,6 +154,7 @@ class F1TVApp:
             )
 
     def year_content(self, year):
+        """Get all content for a given year"""
         year_data = requests.get(
             f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/14?filter_objectSubtype=Meeting&filter_season={year}&filter_fetchAll=Y&filter_orderByFom=Y"
         )
@@ -166,6 +176,7 @@ class F1TVApp:
 
     # Archive Related Methods
     def archive_year(self, pageId):
+        """Individual years from archive, used by archive_year_block"""
         url = f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/2"
         archive_year_data = requests.get(url).json()
         # Build menu for year's different categories
@@ -193,6 +204,8 @@ class F1TVApp:
         self.check_additional_streams(contentId)
 
     def archive_year_block(self, collectionId, type="EXTCOLLECTION"):
+        """Used as part of the shows/archive/documentaries feature; 
+        this takes "blocks" (horizontal scrollers in the UI) of the pages and spits out their data"""
         if type != "EXTCOLLECTION":
             url = f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/14"
             archive_years = requests.get(url, params=collectionId).json()
@@ -228,6 +241,7 @@ class F1TVApp:
             )
 
     def archive(self):
+        """Function allows accessing the f1tv api for the "Archive" page"""
         archive_data = requests.get(
             f"{self.f1tvapi}ALL/PAGE/493/F1_TV_Pro_Monthly/14"
         ).json()
@@ -251,6 +265,7 @@ class F1TVApp:
     # "Shows"/"Documentaries" Related Functions
 
     def shows_documentaries(self, pageId):
+        """Function allows accessing the f1tv api for the "shows" or "documentaries" pages"""
         shows_data = requests.get(
             f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/14"
         ).json()
@@ -318,4 +333,4 @@ class F1TVApp:
             self.shows_documentaries(413)
 
 
-f1tvapp = F1TVApp()
+F1TVAPP = F1TVApp()
