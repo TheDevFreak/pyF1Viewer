@@ -230,10 +230,10 @@ class F1TVApp:
         collectionId = archive_data['resultObj']['containers'][user_input]['retrieveItems']['uriOriginal'].split("/TRAY/EXTCOLLECTION/")[1]
         self.archive_year_block(collectionId)
     
-    #"Shows" Related Functions
+    #"Shows"/"Documentaries" Related Functions
 
-    def shows(self):
-        shows_data = requests.get(f"{self.f1tvapi}ALL/PAGE/410/F1_TV_Pro_Monthly/14").json()
+    def shows_documentaries(self, pageId):
+        shows_data = requests.get(f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/14").json()
 
         #Print out all archive blocks and give users a choice
         counter = 1
@@ -271,6 +271,7 @@ class F1TVApp:
         print("2. Year Choice")
         print("3. Archive")
         print("4. Shows")
+        print("5. Documentaries")
         user_input = int(input("Choice> "))
         if user_input == 1:
             self.get_api_key()
@@ -281,7 +282,9 @@ class F1TVApp:
         elif user_input == 3:
             self.archive()
         elif user_input == 4:
-            self.shows()
+            self.shows_documentaries(410)
+        elif user_input == 5:
+            self.shows_documentaries(413)
 
 
 f1tvapp = F1TVApp()
