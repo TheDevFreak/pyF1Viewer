@@ -102,8 +102,6 @@ class F1TVApp:
         content_headers = {**self.headers, **{"ascendontoken": self.ascendontoken}}
 
         content_m3u8_request = requests.get(url, params=params, headers=content_headers)
-        print(params)
-        print(content_m3u8_request.text)
         if content_m3u8_request.ok:
             print(
                 "Launching mpv with stream url: "
