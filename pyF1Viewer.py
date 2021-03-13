@@ -44,7 +44,7 @@ class F1TVApp:
         login_headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "User-Agent": "RaceControl",
-            "api_key": self.api_key,
+            "apiKey": self.api_key,
             "Content-Type": "application/json",
         }
         data = {"Login": username, "Password": password}
