@@ -177,7 +177,7 @@ class F1TVApp:
     # Archive Related Methods
     def archive_year(self, pageId):
         """Individual years from archive, used by archive_year_block"""
-        url = f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/2"
+        url = f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/14"
         archive_year_data = requests.get(url).json()
         # Build menu for year's different categories
         counter = 1
@@ -210,7 +210,7 @@ class F1TVApp:
             url = f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/14"
             archive_years = requests.get(url, params=collectionId).json()
         else:
-            url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/2"
+            url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/14"
             archive_years = requests.get(url).json()
         # Build menu for archive block's years
         counter = 1
@@ -313,23 +313,40 @@ class F1TVApp:
             self.archive_year_block(params, "SEARCH")
 
     def mainpage(self):
-        print("1. Login")
-        print("2. Year Choice")
-        print("3. Archive")
-        print("4. Shows")
-        print("5. Documentaries")
-        user_input = int(input("Choice> "))
-        if user_input == 1:
+        menu_items = ["Login", "Year Choice", "Archive", "Shows", "Documentaries"]
+        # If there is a current live session - put it on the main menu
+        frontpage_url = f"{self.f1tvapi}ALL/PAGE/395/F1_TV_Pro_Monthly/14"
+        frontpage_data = requests.get(frontpage_url).json()
+        for item in frontpage_data["resultObj"]["containers"]:
+            for sub_item in item["retrieveItems"]["resultObj"]["containers"]:
+                if sub_item["metadata"]["contentSubtype"] == "LIVE":
+                    # This is (one of?) the currently live event(s)!
+                    live_event = sub_item["id"]
+                    menu_items.insert(
+                        1,
+                        f"{sub_item['id']} - LIVE EVENT - {sub_item['metadata']['title']}",
+                    )
+        counter = 1
+        for menu_item in menu_items:
+            print(f"{counter}. {menu_item}")
+            counter += 1
+
+        # Decrement by 1 to get the right one
+        user_input = int(input("Choice> ")) - 1
+        chosen_item = menu_items[user_input]
+        if "LIVE EVENT" in chosen_item:
+            self.check_additional_streams(chosen_item.split(" -")[0])
+        elif "Login" in chosen_item:
             self.get_api_key()
             self.login(input("Username: "), input("Password: "))
-        elif user_input == 2:
+        elif "Year Choice" in chosen_item:
             user_input = int(input("Year Choice> "))
             self.year_content(user_input)
-        elif user_input == 3:
+        elif "Archive" in chosen_item:
             self.archive()
-        elif user_input == 4:
+        elif "Shows" in chosen_item:
             self.shows_documentaries(410)
-        elif user_input == 5:
+        elif "Documentaries" in chosen_item:
             self.shows_documentaries(413)
 
 
