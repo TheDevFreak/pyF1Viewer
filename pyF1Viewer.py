@@ -96,12 +96,14 @@ class F1TVApp:
     def play_content(self, content_id, channel_id=None):
         """With a given content_id and optional channel_id, play that by printing the url and launching mpv"""
         url = "https://f1tv.formula1.com/1.0/R/ENG/BIG_SCREEN_HLS/ALL/CONTENT/PLAY"
-        params = {"content_id": content_id}
+        params = {"contentId": content_id}
         if channel_id:
-            params["channel_id"] = channel_id
+            params["channelId"] = channel_id
         content_headers = {**self.headers, **{"ascendontoken": self.ascendontoken}}
 
         content_m3u8_request = requests.get(url, params=params, headers=content_headers)
+        print(params)
+        print(content_m3u8_request.text)
         if content_m3u8_request.ok:
             print(
                 "Launching mpv with stream url: "
@@ -112,6 +114,7 @@ class F1TVApp:
     def check_additional_streams(self, content_id):
         """Method to check if contendId has additional streams (IE: Onboards, PLC, Data)"""
         url = f"{self.f1tvapi}ALL/CONTENT/VIDEO/{content_id}/F1_TV_Pro_Monthly/{self.f1tvapi_group_id}"
+        print(url)
         content_data = requests.get(url).json()
 
         if (
