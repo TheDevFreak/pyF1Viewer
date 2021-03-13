@@ -14,6 +14,7 @@ class F1TVApp:
         self.apiKey = None
         self.headers = {"User-Agent": "RaceControl"}
         self.ascendontoken = None
+        self.f1tvapi_groupId = 14
         while True:
             self.mainpage()
 
@@ -26,6 +27,15 @@ class F1TVApp:
 
     def login(self, username, password):
         """Logs into F1TV, stores logins for 23hours to reduce auth calls"""
+
+        # Mostly unrelated, but we must get the users "groupId" and store it - makes little difference but can't hurt
+        try:
+            self.f1tvapi_groupId = requests.get(
+                "https://f1tv.formula1.com/1.0/R/ENG/BIG_SCREEN_HLS/ALL/USER/LOCATION"
+            ).json()["resultObj"]["userLocation"][0]["groupId"]
+        except:
+            pass
+
         login_headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "User-Agent": "RaceControl",
@@ -93,7 +103,7 @@ class F1TVApp:
 
     def check_additional_streams(self, contentId):
         """Method to check if contendId has additional streams (IE: Onboards, PLC, Data)"""
-        url = f"{self.f1tvapi}ALL/CONTENT/VIDEO/{contentId}/F1_TV_Pro_Monthly/14"
+        url = f"{self.f1tvapi}ALL/CONTENT/VIDEO/{contentId}/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
         content_data = requests.get(url).json()
 
         if (
@@ -138,7 +148,7 @@ class F1TVApp:
     def meeting_content(self, meetingid):
         """Get contents of a meeting (contents=session meeting=event)"""
         meeting_data = requests.get(
-            f"{self.f1tvapi}ALL/PAGE/SANDWICH/F1_TV_Pro_Monthly/14?meetingId={meetingid}&title=weekend-sessions"
+            f"{self.f1tvapi}ALL/PAGE/SANDWICH/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}?meetingId={meetingid}&title=weekend-sessions"
         )
         # Print out all sessions of meeting
         if meeting_data.ok:
@@ -156,7 +166,7 @@ class F1TVApp:
     def year_content(self, year):
         """Get all content for a given year"""
         year_data = requests.get(
-            f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/14?filter_objectSubtype=Meeting&filter_season={year}&filter_fetchAll=Y&filter_orderByFom=Y"
+            f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}?filter_objectSubtype=Meeting&filter_season={year}&filter_fetchAll=Y&filter_orderByFom=Y"
         )
         # Print out all "meetings"
         if year_data.ok:
@@ -177,7 +187,9 @@ class F1TVApp:
     # Archive Related Methods
     def archive_year(self, pageId):
         """Individual years from archive, used by archive_year_block"""
-        url = f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/14"
+        url = (
+            f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
+        )
         archive_year_data = requests.get(url).json()
         # Build menu for year's different categories
         counter = 1
@@ -207,10 +219,10 @@ class F1TVApp:
         """Used as part of the shows/archive/documentaries feature; 
         this takes "blocks" (horizontal scrollers in the UI) of the pages and spits out their data"""
         if type != "EXTCOLLECTION":
-            url = f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/14"
+            url = f"{self.f1tvapi}ALL/PAGE/SEARCH/VOD/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
             archive_years = requests.get(url, params=collectionId).json()
         else:
-            url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/14"
+            url = f"{self.f1tvapi}ALL/PAGE/EXTCOLLECTION/{collectionId}/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
             archive_years = requests.get(url).json()
         # Build menu for archive block's years
         counter = 1
@@ -243,7 +255,7 @@ class F1TVApp:
     def archive(self):
         """Function allows accessing the f1tv api for the "Archive" page"""
         archive_data = requests.get(
-            f"{self.f1tvapi}ALL/PAGE/493/F1_TV_Pro_Monthly/14"
+            f"{self.f1tvapi}ALL/PAGE/493/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
         ).json()
 
         # Print out all archive blocks and give users a choice
@@ -267,7 +279,7 @@ class F1TVApp:
     def shows_documentaries(self, pageId):
         """Function allows accessing the f1tv api for the "shows" or "documentaries" pages"""
         shows_data = requests.get(
-            f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/14"
+            f"{self.f1tvapi}ALL/PAGE/{pageId}/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
         ).json()
 
         # Print out all archive blocks and give users a choice
@@ -315,7 +327,9 @@ class F1TVApp:
     def mainpage(self):
         menu_items = ["Login", "Year Choice", "Archive", "Shows", "Documentaries"]
         # If there is a current live session - put it on the main menu
-        frontpage_url = f"{self.f1tvapi}ALL/PAGE/395/F1_TV_Pro_Monthly/14"
+        frontpage_url = (
+            f"{self.f1tvapi}ALL/PAGE/395/F1_TV_Pro_Monthly/{self.f1tvapi_groupId}"
+        )
         frontpage_data = requests.get(frontpage_url).json()
         for item in frontpage_data["resultObj"]["containers"]:
             for sub_item in item["retrieveItems"]["resultObj"]["containers"]:
